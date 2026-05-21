@@ -1,6 +1,7 @@
 import type { Exercise, LiftSession, SetData } from '../types';
 import { I } from './icons';
 import { SetRow } from './SetRow';
+import { btnG } from '../styles/shared';
 
 interface Props {
   exercise: Exercise;
@@ -8,12 +9,14 @@ interface Props {
   sets: SetData[];
   lastSession: LiftSession | undefined;
   startingWeight: number | undefined;
+  readOnly?: boolean;
   onSetComplete: (exIdx: number, setIdx: number, data: SetData) => void;
+  onShowHistory: () => void;
   expanded: boolean;
   onToggle: () => void;
 }
 
-export function ExerciseCard({ exercise, exerciseIdx, sets, lastSession, startingWeight, onSetComplete, expanded, onToggle }: Props) {
+export function ExerciseCard({ exercise, exerciseIdx, sets, lastSession, startingWeight, readOnly, onSetComplete, onShowHistory, expanded, onToggle }: Props) {
   const doneCount = sets.filter((s) => s.done).length;
   const allDone = doneCount === exercise.sets;
   const lastSets = lastSession?.sessionData?.find((e) => e.name === exercise.name)?.sets ?? [];
@@ -24,7 +27,7 @@ export function ExerciseCard({ exercise, exerciseIdx, sets, lastSession, startin
   return (
     <div style={{ background: 'var(--card)', border: `1px solid ${allDone ? 'rgba(125,212,154,0.4)' : 'var(--border)'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.3s' }}>
       <div onClick={onToggle} style={{ padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div className="anton" style={{ width: 36, height: 36, borderRadius: 8, background: allDone ? 'rgba(125,212,154,0.13)' : 'var(--bg)', border: `1px solid ${allDone ? 'rgba(125,212,154,0.4)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: allDone ? 'var(--success)' : 'var(--muted)' }}>
+        <div className="anton" style={{ width: 36, height: 36, borderRadius: 8, background: allDone ? 'rgba(125,212,154,0.13)' : 'var(--bg)', border: `1px solid ${allDone ? 'rgba(125,212,154,0.4)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: allDone ? 'var(--success)' : 'var(--muted)', flexShrink: 0 }}>
           {allDone ? <I.Check size={18} sw={3} /> : exerciseIdx + 1}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -35,6 +38,13 @@ export function ExerciseCard({ exercise, exerciseIdx, sets, lastSession, startin
           </div>
         </div>
         <div className="mono" style={{ fontSize: 12, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums' }}>{doneCount}/{exercise.sets}</div>
+        <button
+          onClick={(e) => { e.stopPropagation(); onShowHistory(); }}
+          style={btnG(28)}
+          title="Exercise history"
+        >
+          <I.History size={14} color="var(--dim)" />
+        </button>
         <I.ChevR size={16} color="var(--dim)" style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
       </div>
       {expanded && (
@@ -46,6 +56,7 @@ export function ExerciseCard({ exercise, exerciseIdx, sets, lastSession, startin
               set={sets[i] || {}}
               last={lastSets[i]?.done ? lastSets[i] : syntheticLast}
               exercise={exercise}
+              readOnly={readOnly}
               onComplete={(idx, d) => onSetComplete(exerciseIdx, idx, d)}
             />
           ))}

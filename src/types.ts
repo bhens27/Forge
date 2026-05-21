@@ -35,12 +35,17 @@ export interface RunPhase {
   tempo: string;
 }
 
+export type Gym = 'Dropgym' | 'Dilly' | 'Other';
+
 export interface LiftSession {
   date: string;
   day: string;
   name: string;
   subtitle: string;
   type: 'lift';
+  gym?: Gym;
+  completed?: boolean;
+  completedAt?: number;
   exercises: Exercise[];
   sessionData: ExerciseSessionData[];
 }
@@ -51,6 +56,7 @@ export interface RunSession {
   name: string;
   subtitle: string;
   type: 'run';
+  gym?: Gym;
   runType: 'intervals' | 'tempo';
   phase?: number;
   reps?: string;

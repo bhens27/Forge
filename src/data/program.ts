@@ -1,11 +1,11 @@
 import type { DayConfig, RunPhase } from '../types';
 
 export const REST = {
-  heavy: 150,
-  compound: 105,
-  accessory: 75,
-  isolation: 60,
-  pullup: 120,
+  heavy: 90,
+  compound: 90,
+  accessory: 90,
+  isolation: 90,
+  pullup: 90,
 } as const;
 
 export const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;

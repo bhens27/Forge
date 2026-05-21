@@ -8,10 +8,11 @@ interface Props {
   set: SetData;
   last: SetData | null | undefined;
   exercise: Exercise;
+  readOnly?: boolean;
   onComplete: (setIdx: number, data: SetData) => void;
 }
 
-export function SetRow({ setIdx, set, last, exercise, onComplete }: Props) {
+export function SetRow({ setIdx, set, last, exercise, readOnly, onComplete }: Props) {
   const [editing, setEditing] = useState(!set.done);
   const [weight, setWeight] = useState<string>(() => {
     const w = set.weight ?? last?.weight;
@@ -40,6 +41,34 @@ export function SetRow({ setIdx, set, last, exercise, onComplete }: Props) {
     onComplete(setIdx, { weight: w === null || isNaN(w) ? null : w, reps: r, done: true });
     setEditing(false);
   };
+
+  // Read-only: completed set
+  if (readOnly && set.done) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--cardHi)', border: '1px solid rgba(125,212,154,0.3)' }}>
+        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(125,212,154,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <I.Check size={14} color="var(--success)" sw={3} />
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 12 }}>
+          <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em' }}>SET {setIdx + 1}</span>
+          <span className="mono" style={{ fontSize: 16, fontWeight: 600 }}>
+            {set.weight != null ? `${set.weight}kg × ` : ''}{set.reps}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Read-only: unlogged set
+  if (readOnly && !set.done) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: 'var(--card)', border: '1px solid var(--border)', opacity: 0.45 }}>
+        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--bg)', border: '1px solid var(--border)', flexShrink: 0 }} />
+        <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em' }}>SET {setIdx + 1}</span>
+        <span className="mono" style={{ color: 'var(--dim)', fontSize: 14 }}>—</span>
+      </div>
+    );
+  }
 
   if (set.done && !editing) {
     return (

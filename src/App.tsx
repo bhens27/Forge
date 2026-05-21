@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import type { Session, LiftSession, RunSession, WeighIn, ViewName, SetData } from './types';
+import type { Session, LiftSession, RunSession, WeighIn, ViewName, SetData, Gym } from './types';
 import { PROGRAM } from './data/program';
 import { store } from './lib/store';
 import { todayKey, dayName } from './lib/utils';
+import { GymPicker } from './components/GymPicker';
 import { RestTimerOverlay } from './components/RestTimerOverlay';
 import { HomeView } from './views/HomeView';
 import { WorkoutView } from './views/WorkoutView';
@@ -18,6 +19,7 @@ export function App() {
   const [history, setHistory] = useState<Session[]>([]);
   const [weighIns, setWeighIns] = useState<WeighIn[]>([]);
   const [startingWeights, setStartingWeights] = useState<Record<string, number>>({});
+  const [gymPickerDay, setGymPickerDay] = useState<string | null>(null);
   const [restActive, setRestActive] = useState(false);
   const [restRemaining, setRestRemaining] = useState(0);
   const [restTotal, setRestTotal] = useState(0);
@@ -114,15 +116,35 @@ export function App() {
     });
   }, []);
 
-  const startSession = (day = dn) => {
+  const launchSession = (day: string, gym: Gym) => {
     const cfg = PROGRAM[day];
-    if (cfg.type === 'rest') return;
     const existing = store.get<Session>(`session:${todayKey()}:${day}`);
-    setCurrentSession(existing || ensureSession(day));
+    const session: Session = { ...(existing ?? ensureSession(day)), gym } as Session;
+    setCurrentSession(session);
     setView(cfg.type === 'lift' ? 'workout' : 'run');
     if ('Notification' in window && Notification.permission === 'default') {
       try { Notification.requestPermission(); } catch { /* noop */ }
     }
+  };
+
+  const startSession = (day = dn) => {
+    const cfg = PROGRAM[day];
+    if (cfg.type === 'rest') return;
+    // If reopening an in-progress session that already has a gym, skip the picker
+    const existing = store.get<Session>(`session:${todayKey()}:${day}`);
+    if (existing && (existing as LiftSession | RunSession).gym) {
+      setCurrentSession(existing);
+      setView(cfg.type === 'lift' ? 'workout' : 'run');
+      return;
+    }
+    setGymPickerDay(day);
+  };
+
+  const handleGymSelect = (gym: Gym) => {
+    const day = gymPickerDay;
+    setGymPickerDay(null);
+    if (!day) return;
+    launchSession(day, gym);
   };
 
   const handleSetComplete = (exIdx: number, setIdx: number, data: SetData) => {
@@ -153,6 +175,40 @@ export function App() {
     setView('home');
     setCurrentSession(null);
     setRestActive(false);
+  };
+
+  const handleEndSession = () => {
+    if (!currentSession || currentSession.type !== 'lift') return;
+    const completedAt = Date.now();
+    const completed: LiftSession = { ...(currentSession as LiftSession), completed: true, completedAt };
+    // Store under a unique timestamped key so the standard key is free for a new session
+    store.set(`session:${completed.date}:${completed.day}:${completedAt}`, completed);
+    // Clear the in-progress key
+    store.del(`session:${completed.date}:${completed.day}`);
+    // Update history: replace the in-progress entry with the completed one
+    setHistory((prev) => {
+      const filtered = prev.filter((p) => !(p.date === completed.date && p.day === completed.day && !(p as LiftSession).completed));
+      return [completed, ...filtered].sort((a, b) => b.date.localeCompare(a.date));
+    });
+    setView('home');
+    setCurrentSession(null);
+    setRestActive(false);
+  };
+
+  const handleReopenSession = () => {
+    if (!currentSession || currentSession.type !== 'lift') return;
+    const s = currentSession as LiftSession;
+    const reopened: LiftSession = { ...s, completed: false, completedAt: undefined };
+    // Delete any timestamped completed keys for this session
+    store.listKeys(`session:${s.date}:${s.day}:`).forEach((k) => store.del(k));
+    // Save at the standard in-progress key
+    store.set(`session:${reopened.date}:${reopened.day}`, reopened);
+    // Update history: remove the completed entry, add the reopened one
+    setHistory((prev) => {
+      const filtered = prev.filter((p) => !(p.date === s.date && p.day === s.day));
+      return [reopened, ...filtered].sort((a, b) => b.date.localeCompare(a.date));
+    });
+    setCurrentSession(reopened);
   };
 
   const handleRunSave = (data: Partial<RunSession>) => {
@@ -204,7 +260,10 @@ export function App() {
           session={currentSession as LiftSession}
           lastSession={lastSessionFor((currentSession as LiftSession).day)}
           startingWeights={startingWeights}
+          history={history}
           onSetComplete={handleSetComplete}
+          onEndSession={handleEndSession}
+          onReopenSession={handleReopenSession}
           onFinish={finishWorkout}
           onBack={() => { setView('home'); setRestActive(false); }}
         />
@@ -244,6 +303,9 @@ export function App() {
         onExtend={(s) => { restEndRef.current += s * 1000; setRestTotal((t) => t + s); setRestRemaining((r) => r + s); }}
         onCancel={() => setRestActive(false)}
       />
+      {gymPickerDay && (
+        <GymPicker onSelect={handleGymSelect} onCancel={() => setGymPickerDay(null)} />
+      )}
     </div>
   );
 }
