@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#0A0E14" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="mobile-web-app-capable" content="yes" />
+<title>FORGE</title>
+<link rel="manifest" href='data:application/manifest+json,{"name":"FORGE","short_name":"FORGE","start_url":"./","display":"standalone","orientation":"portrait","theme_color":"%230A0E14","background_color":"%230A0E14","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22%3E%3Crect width=%22192%22 height=%22192%22 rx=%2240%22 fill=%22%230A0E14%22/%3E%3Cg fill=%22none%22 stroke=%22%23E58A5A%22 stroke-width=%2210%22 stroke-linecap=%22round%22%3E%3Cpath d=%22M50 60v72M142 60v72M50 96h92M30 84v24M162 84v24%22/%3E%3C/g%3E%3C/svg%3E","sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},{"src":"data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22100%22 fill=%22%230A0E14%22/%3E%3Cg fill=%22none%22 stroke=%22%23E58A5A%22 stroke-width=%2226%22 stroke-linecap=%22round%22%3E%3Cpath d=%22M134 160v192M378 160v192M134 256h244M80 224v64M432 224v64%22/%3E%3C/g%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}]}' />
+<link rel="apple-touch-icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><rect width="180" height="180" rx="38" fill="%230A0E14"/><g fill="none" stroke="%23E58A5A" stroke-width="10" stroke-linecap="round"><path d="M48 56v68M132 56v68M48 90h84M30 78v24M150 78v24"/></g></svg>' />
+<style>
+  :root {
+    --bg: #0A0E14;
+    --bg2: #11161F;
+    --card: #181F2B;
+    --cardHi: #222B3A;
+    --border: #2A3445;
+    --borderHi: #3D4A60;
+    --text: #F5F1EC;
+    --muted: #8896AB;
+    --dim: #5A6577;
+    --accent: #E58A5A;
+    --accentDim: #A45A30;
+    --success: #7DD49A;
+    --warn: #E5C45A;
+    --danger: #E56A6A;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'DM Sans', system-ui, -apple-system, sans-serif; min-height: 100vh; overscroll-behavior-y: contain; }
+  body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+  input, button, textarea { font-family: inherit; color: inherit; }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+  button { background: none; border: none; cursor: pointer; padding: 0; }
+  button:active { transform: scale(0.97); transition: transform 0.08s; }
+  .anton { font-family: 'Anton', 'Bebas Neue', 'Arial Narrow', sans-serif; letter-spacing: 0.04em; }
+  .mono { font-family: 'JetBrains Mono', 'Menlo', 'Consolas', monospace; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .root { min-height: 100vh; background: radial-gradient(at top, var(--bg2) 0%, var(--bg) 60%); animation: fadeIn 0.3s ease; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+import { h, render } from 'https://esm.sh/preact@10.22.0';
+import { useState, useEffect, useRef, useCallback } from 'https://esm.sh/preact@10.22.0/hooks';
+import htm from 'https://esm.sh/htm@3.1.1';
+const html = htm.bind(h);
+
+/* ===========================================================
+   ICONS  (inline SVG, lucide-style)
+   =========================================================== */
+const Svg = ({ children, size = 18, color = 'currentColor', sw = 2, style = {} }) => html`
+  <svg xmlns="http://www.w3.org/2000/svg" width=${size} height=${size} viewBox="0 0 24 24" fill="none"
+    stroke=${color} stroke-width=${sw} stroke-linecap="round" stroke-linejoin="round" style=${style}>${children}</svg>
+`;
+const I = {
+  dumbbell: (p) => html`<${Svg} ...${p}><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M14 12h-4"/><rect x="2" y="9" width="3" height="6" rx="1"/><rect x="19" y="9" width="3" height="6" rx="1"/><//>`,
+  timer: (p) => html`<${Svg} ...${p}><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/><//>`,
+  chevR: (p) => html`<${Svg} ...${p}><polyline points="9 18 15 12 9 6"/><//>`,
+  chevL: (p) => html`<${Svg} ...${p}><polyline points="15 18 9 12 15 6"/><//>`,
+  check: (p) => html`<${Svg} ...${p}><polyline points="20 6 9 17 4 12"/><//>`,
+  x: (p) => html`<${Svg} ...${p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/><//>`,
+  plus: (p) => html`<${Svg} ...${p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/><//>`,
+  play: (p) => html`<${Svg} ...${p}><polygon points="6 4 20 12 6 20 6 4" fill="currentColor" stroke="currentColor"/><//>`,
+  flame: (p) => html`<${Svg} ...${p}><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/><//>`,
+  wind: (p) => html`<${Svg} ...${p}><path d="M9.59 4.59A2 2 0 1111 8H2"/><path d="M17.73 2.27A2.5 2.5 0 1119.5 6.5H2"/><path d="M14.59 16.41A2 2 0 1116 20"/><//>`,
+  moon: (p) => html`<${Svg} ...${p}><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/><//>`,
+  scale: (p) => html`<${Svg} ...${p}><path d="M5 17.13a1 1 0 01-.99-1.13l1.79-13a1 1 0 01.99-.87h10.42a1 1 0 01.99.87l1.79 13a1 1 0 01-.99 1.13z"/><line x1="12" y1="7" x2="12" y2="13"/><//>`,
+  history: (p) => html`<${Svg} ...${p}><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><polyline points="12 7 12 12 16 14"/><//>`,
+  gear: (p) => html`<${Svg} ...${p}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/><//>`,
+};
+
+/* ===========================================================
+   PROGRAM DATA
+   =========================================================== */
+const REST = { heavy: 150, compound: 105, accessory: 75, isolation: 60, pullup: 120 };
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAY_LONG = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+const PROGRAM = {
+  Mon: { name:'Chest & Back', subtitle:'Heavy Bench Day', type:'lift', icon:'flame', exercises: [
+    { name:'Smith machine flat bench', sets:4, reps:5, rest:REST.heavy, note:'+2.5kg/wk when all reps clean' },
+    { name:'Pull-ups', sets:4, reps:'1 RIR', rest:REST.pullup, note:'Per phase progression', bodyweight:true },
+    { name:'Incline DB press', sets:3, reps:8, rest:REST.compound },
+    { name:'Machine pec fly', sets:3, reps:12, rest:REST.isolation },
+    { name:'Barbell bent-over row', sets:3, reps:6, rest:REST.compound, note:'Heavy' },
+    { name:'Cable row, close grip', sets:3, reps:8, rest:REST.accessory },
+    { name:'Tricep pushdown machine', sets:3, reps:10, rest:REST.isolation },
+  ]},
+  Tue: { name:'Intervals', subtitle:'5k Speed Work', type:'run', icon:'wind', runType:'intervals' },
+  Wed: { name:'Shoulders & Arms', subtitle:'Heavy OHP', type:'lift', icon:'flame', exercises: [
+    { name:'OHP (barbell or DB)', sets:4, reps:6, rest:REST.heavy, note:'Heavy' },
+    { name:'Lateral raises', sets:3, reps:12, rest:REST.isolation },
+    { name:'Rear delt fly machine', sets:3, reps:12, rest:REST.isolation },
+    { name:'Chin-ups', sets:3, reps:8, rest:REST.pullup, note:'Per phase', bodyweight:true },
+    { name:'Machine dip (loaded)', sets:3, reps:8, rest:REST.compound },
+    { name:'Incline DB curl', sets:3, reps:10, rest:REST.accessory },
+    { name:'Rope tricep extension', sets:3, reps:12, rest:REST.isolation },
+  ]},
+  Thu: { name:'Legs', subtitle:'Lower Body', type:'lift', icon:'flame', exercises: [
+    { name:'DB front-foot elevated lunges', sets:3, reps:'10 ea', rest:REST.compound },
+    { name:'Seated hamstring curls', sets:3, reps:10, rest:REST.accessory },
+    { name:'Leg press', sets:3, reps:10, rest:REST.compound },
+    { name:'Machine hip thrust', sets:3, reps:10, rest:REST.compound },
+    { name:'Leg extensions', sets:3, reps:10, rest:REST.isolation },
+    { name:'Calf raises', sets:3, reps:'12-15', rest:REST.isolation },
+    { name:'Weighted sit-ups', sets:3, reps:12, rest:REST.isolation },
+    { name:'Lying leg raises', sets:3, reps:12, rest:REST.isolation, bodyweight:true },
+  ]},
+  Fri: { name:'Full Upper', subtitle:'Volume Bench', type:'lift', icon:'flame', exercises: [
+    { name:'Pull-ups', sets:5, reps:'1-2 RIR', rest:REST.pullup, note:'Per phase', bodyweight:true },
+    { name:'Smith machine flat bench', sets:3, reps:8, rest:REST.compound, note:'80% of Mon' },
+    { name:'Close-grip Smith bench', sets:3, reps:8, rest:REST.compound },
+    { name:'Chest-supported DB row', sets:3, reps:10, rest:REST.accessory },
+    { name:'Seated DB shoulder press', sets:3, reps:10, rest:REST.compound, note:'Moderate' },
+    { name:'Hammer curls', sets:3, reps:10, rest:REST.accessory },
+    { name:'Weighted sit-ups', sets:3, reps:12, rest:REST.isolation },
+  ]},
+  Sat: { name:'Peloton / Rest', subtitle:'Active Recovery', type:'rest', icon:'moon' },
+  Sun: { name:'Tempo Run', subtitle:'5k Threshold', type:'run', icon:'wind', runType:'tempo' },
+};
+
+const RUN_PHASES = [
+  { weeks:'1-2',  intervals:'5-6 × 500m @ 12.5 km/h, 90s rest', tempo:'18 min @ 12 km/h' },
+  { weeks:'3-4',  intervals:'5 × 600m @ 13 km/h, 90s rest',     tempo:'20 min @ 12.4 km/h' },
+  { weeks:'5',    intervals:'4 × 600m @ 13 km/h (deload)',       tempo:'18 min @ 12.4 km/h' },
+  { weeks:'6-8',  intervals:'5 × 800m @ 13.3 km/h, 90s rest',    tempo:'22 min @ 12.85 km/h' },
+  { weeks:'9-10', intervals:'5 × 800m @ 13.6 km/h',              tempo:'24 min @ 13 km/h' },
+  { weeks:'11-14',intervals:'5-6 × 800m @ 13.85-14.3 km/h',      tempo:'25 min @ 13.2 km/h' },
+];
+
+/* ===========================================================
+   HELPERS / STORAGE
+   =========================================================== */
+const todayKey = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+const dayName = (d = new Date()) => DAY_NAMES[d.getDay()];
+const formatTime = (s) => {
+  if (s < 0) s = 0;
+  const m = Math.floor(s/60), sec = s%60;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+};
+
+const KEY = 'forge.v1.';
+const store = {
+  get(k, def = null) {
+    try { const v = localStorage.getItem(KEY + k); return v ? JSON.parse(v) : def; }
+    catch { return def; }
+  },
+  set(k, v) {
+    try { localStorage.setItem(KEY + k, JSON.stringify(v)); return true; }
+    catch { return false; }
+  },
+  del(k) { try { localStorage.removeItem(KEY + k); } catch {} },
+  listKeys(prefix) {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(KEY + prefix)) out.push(k.slice(KEY.length));
+    }
+    return out;
+  },
+};
+
+/* ===========================================================
+   SHARED STYLES
+   =========================================================== */
+const btnP = (h = 44) => ({
+  height: h, border: 'none', borderRadius: 10,
+  background: 'var(--accent)', color: 'var(--bg)',
+  fontWeight: 700, fontSize: 14, letterSpacing: '0.04em',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  cursor: 'pointer', boxShadow: '0 2px 8px rgba(229,138,90,0.3)',
+});
+const btnS = (h = 44) => ({
+  height: h, borderRadius: 10, background: 'transparent', color: 'var(--text)',
+  border: '1px solid var(--border)', fontWeight: 600, fontSize: 14,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  cursor: 'pointer',
+});
+const btnG = (size = 36) => ({
+  width: size, height: size, borderRadius: 8, background: 'transparent',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+});
+const topBar = {
+  position: 'sticky', top: 0, zIndex: 30, background: 'rgba(10,14,20,0.92)',
+  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+  borderBottom: '1px solid var(--border)',
+  padding: '12px 12px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
+};
+const numInput = {
+  width: '100%', height: 46, background: 'var(--bg)', color: 'var(--text)',
+  border: '1px solid var(--border)', borderRadius: 8, padding: '0 12px',
+  fontFamily: "'JetBrains Mono', monospace", fontSize: 18, fontWeight: 600,
+  outline: 'none', textAlign: 'center',
+};
+const inputLabel = {
+  display: 'block', color: 'var(--muted)', fontSize: 9, fontWeight: 700,
+  letterSpacing: '0.1em', marginBottom: 4,
+};
+
+/* ===========================================================
+   COMPONENTS
+   =========================================================== */
+const Logo = () => html`
+  <div style=${{ display:'flex', alignItems:'center', gap:10 }}>
+    <div style=${{ width:32, height:32, borderRadius:6, background:'linear-gradient(135deg, var(--accent), var(--accentDim))', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 12px rgba(229,138,90,0.25)' }}>
+      <${I.dumbbell} size=${18} color="var(--bg)" sw=${2.5} />
+    </div>
+    <div class="anton" style=${{ fontSize:22, letterSpacing:'0.12em' }}>FORGE</div>
+  </div>
+`;
+
+const RestTimerOverlay = ({ active, remaining, total, onSkip, onExtend, onCancel }) => {
+  if (!active) return null;
+  const pct = total > 0 ? Math.max(0, Math.min(100, (remaining/total)*100)) : 0;
+  return html`
+    <div style=${{ position:'fixed', left:0, right:0, bottom:0, zIndex:50, background:'var(--bg2)', borderTop:'1px solid var(--border)', padding:'16px 16px calc(16px + env(safe-area-inset-bottom))', boxShadow:'0 -8px 32px rgba(0,0,0,0.6)' }}>
+      <div style=${{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+        <div style=${{ display:'flex', alignItems:'center', gap:8 }}>
+          <${I.timer} size=${16} color="var(--accent)" />
+          <span style=${{ color:'var(--muted)', fontSize:12, letterSpacing:'0.08em', textTransform:'uppercase', fontWeight:600 }}>Rest</span>
+        </div>
+        <button onClick=${onCancel} style=${btnG(28)}><${I.x} size=${14} color="var(--muted)"/></button>
+      </div>
+      <div class="anton" style=${{ fontSize:56, textAlign:'center', lineHeight:1, marginBottom:12 }}>${formatTime(remaining)}</div>
+      <div style=${{ height:4, borderRadius:2, background:'var(--border)', overflow:'hidden', marginBottom:14 }}>
+        <div style=${{ width:`${pct}%`, height:'100%', background: remaining <= 10 ? 'var(--warn)' : 'var(--accent)', transition:'width 0.4s linear, background 0.3s ease' }} />
+      </div>
+      <div style=${{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+        <button onClick=${() => onExtend(30)} style=${btnS()}><${I.plus} size=${14}/> 30s</button>
+        <button onClick=${onSkip} style=${btnP()}>Skip <${I.chevR} size=${14}/></button>
+      </div>
+    </div>
+  `;
+};
+
+/* ----- Set Row ----- */
+const SetRow = ({ setIdx, set, last, exercise, onComplete }) => {
+  const [editing, setEditing] = useState(!set.done);
+  const [weight, setWeight] = useState(set.weight ?? (last?.weight ?? ''));
+  const [reps, setReps] = useState(set.reps ?? (last?.reps ?? ''));
+
+  useEffect(() => {
+    if (!set.done) {
+      setWeight(set.weight ?? (last?.weight ?? ''));
+      setReps(set.reps ?? (last?.reps ?? ''));
+    }
+  }, [exercise.name, setIdx]);
+
+  const confirm = () => {
+    const w = weight === '' ? null : parseFloat(weight);
+    const r = reps === '' ? null : parseInt(reps, 10);
+    if (r === null || isNaN(r)) return;
+    onComplete(setIdx, { weight: isNaN(w) ? null : w, reps: r, done: true });
+    setEditing(false);
+  };
+
+  if (set.done && !editing) {
+    return html`
+      <div onClick=${() => setEditing(true)} style=${{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:10, background:'var(--cardHi)', border:'1px solid rgba(125,212,154,0.3)', cursor:'pointer' }}>
+        <div style=${{ width:26, height:26, borderRadius:'50%', background:'rgba(125,212,154,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <${I.check} size=${14} color="var(--success)" sw=${3}/>
+        </div>
+        <div style=${{ flex:1, display:'flex', alignItems:'baseline', gap:12 }}>
+          <span style=${{ color:'var(--muted)', fontSize:11, fontWeight:600, letterSpacing:'0.08em' }}>SET ${setIdx + 1}</span>
+          <span class="mono" style=${{ fontSize:16, fontWeight:600 }}>
+            ${set.weight !== null && set.weight !== undefined ? `${set.weight}kg × ` : ''}${set.reps}
+          </span>
+        </div>
+        <${I.chevR} size=${14} color="var(--dim)"/>
+      </div>
+    `;
+  }
+
+  return html`
+    <div style=${{ padding:12, borderRadius:10, background:'var(--cardHi)', border:'1px solid var(--borderHi)' }}>
+      <div style=${{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+        <span style=${{ color:'var(--accent)', fontSize:11, fontWeight:700, letterSpacing:'0.1em' }}>SET ${setIdx + 1}</span>
+        ${last && html`
+          <span class="mono" style=${{ fontSize:11, color:'var(--dim)' }}>
+            last: ${last.weight ? `${last.weight}kg × ` : ''}${last.reps ?? '—'}
+          </span>
+        `}
+      </div>
+      <div style=${{ display:'grid', gridTemplateColumns:'1fr 1fr auto', gap:8, alignItems:'center' }}>
+        <div>
+          <label style=${inputLabel}>WEIGHT (kg)</label>
+          <input type="number" inputMode="decimal" value=${weight}
+            onInput=${(e) => setWeight(e.target.value)}
+            placeholder=${exercise.bodyweight ? 'BW' : '0'} style=${numInput} />
+        </div>
+        <div>
+          <label style=${inputLabel}>REPS</label>
+          <input type="number" inputMode="numeric" value=${reps}
+            onInput=${(e) => setReps(e.target.value)}
+            placeholder="0" style=${numInput} />
+        </div>
+        <button onClick=${confirm} style=${{ ...btnP(46), width:46, padding:0, marginTop:14 }}>
+          <${I.check} size=${18} sw=${2.5}/>
+        </button>
+      </div>
+    </div>
+  `;
+};
+
+/* ----- Exercise Card ----- */
+const ExerciseCard = ({ exercise, exerciseIdx, sets, lastSession, startingWeight, onSetComplete, expanded, onToggle }) => {
+  const doneCount = sets.filter((s) => s.done).length;
+  const allDone = doneCount === exercise.sets;
+  const lastSets = lastSession?.exercises?.find((e) => e.name === exercise.name)?.sets || [];
+  const syntheticLast = startingWeight != null
+    ? { weight: startingWeight, reps: typeof exercise.reps === 'number' ? exercise.reps : null }
+    : null;
+
+  return html`
+    <div style=${{ background:'var(--card)', border:`1px solid ${allDone ? 'rgba(125,212,154,0.4)' : 'var(--border)'}`, borderRadius:14, overflow:'hidden', transition:'border-color 0.3s' }}>
+      <div onClick=${onToggle} style=${{ padding:'14px 16px', cursor:'pointer', display:'flex', alignItems:'center', gap:12 }}>
+        <div class="anton" style=${{ width:36, height:36, borderRadius:8, background: allDone ? 'rgba(125,212,154,0.13)' : 'var(--bg)', border:`1px solid ${allDone ? 'rgba(125,212,154,0.4)' : 'var(--border)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, color: allDone ? 'var(--success)' : 'var(--muted)' }}>
+          ${allDone ? html`<${I.check} size=${18} sw=${3}/>` : exerciseIdx + 1}
+        </div>
+        <div style=${{ flex:1, minWidth:0 }}>
+          <div style=${{ fontSize:14, fontWeight:600, lineHeight:1.2, marginBottom:3 }}>${exercise.name}</div>
+          <div style=${{ display:'flex', alignItems:'center', gap:8 }}>
+            <span class="mono" style=${{ fontSize:11, color:'var(--accent)', fontWeight:600 }}>${exercise.sets} × ${exercise.reps}</span>
+            ${exercise.note && html`<span style=${{ color:'var(--dim)', fontSize:11 }}>· ${exercise.note}</span>`}
+          </div>
+        </div>
+        <div class="mono" style=${{ fontSize:12, color:'var(--muted)', fontVariantNumeric:'tabular-nums' }}>${doneCount}/${exercise.sets}</div>
+        <${I.chevR} size=${16} color="var(--dim)" style=${{ transform: expanded ? 'rotate(90deg)' : 'rotate(0)', transition:'transform 0.2s' }}/>
+      </div>
+      ${expanded && html`
+        <div style=${{ padding:'0 12px 12px', display:'flex', flexDirection:'column', gap:8 }}>
+          ${Array.from({length: exercise.sets}).map((_, i) => html`
+            <${SetRow}
+              key=${i}
+              setIdx=${i}
+              set=${sets[i] || {}}
+              last=${lastSets[i]?.done ? lastSets[i] : syntheticLast}
+              exercise=${exercise}
+              onComplete=${(idx, d) => onSetComplete(exerciseIdx, idx, d)}
+            />
+          `)}
+        </div>
+      `}
+    </div>
+  `;
+};
+
+/* ----- Workout (Lift) View ----- */
+const WorkoutView = ({ session, lastSession, startingWeights = {}, onSetComplete, onFinish, onBack }) => {
+  const [expanded, setExpanded] = useState(0);
+  const totalSets = session.exercises.reduce((s, e) => s + e.sets, 0);
+  const doneSets = session.sessionData.reduce((s, e) => s + (e?.sets || []).filter((x) => x?.done).length, 0);
+  const pct = totalSets > 0 ? Math.round((doneSets / totalSets) * 100) : 0;
+
+  return html`
+    <div style=${{ paddingBottom:140 }}>
+      <div style=${topBar}>
+        <button onClick=${onBack} style=${btnG()}><${I.chevL} size=${20}/></button>
+        <div style=${{ flex:1, textAlign:'center' }}>
+          <div style=${{ color:'var(--muted)', fontSize:10, letterSpacing:'0.15em', fontWeight:700 }}>${session.day.toUpperCase()}</div>
+          <div class="anton" style=${{ fontSize:18 }}>${session.name.toUpperCase()}</div>
+        </div>
+        <button onClick=${onFinish} style=${btnG()}><${I.check} size=${20} color="var(--accent)"/></button>
+      </div>
+      <div style=${{ padding:'0 16px 16px' }}>
+        <div style=${{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:12, background:'linear-gradient(135deg, var(--bg2), var(--card))', border:'1px solid var(--border)', marginBottom:14 }}>
+          <div>
+            <div style=${{ color:'var(--muted)', fontSize:10, fontWeight:700, letterSpacing:'0.1em' }}>PROGRESS</div>
+            <div class="anton" style=${{ fontSize:28, lineHeight:1 }}>${doneSets}<span style=${{ color:'var(--dim)', fontSize:18 }}>/${totalSets}</span></div>
+          </div>
+          <div style=${{ width:56, height:56, borderRadius:'50%', background:`conic-gradient(var(--accent) ${pct}%, var(--border) 0)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <div class="mono" style=${{ width:44, height:44, borderRadius:'50%', background:'var(--bg2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:700 }}>${pct}%</div>
+          </div>
+        </div>
+        <div style=${{ display:'flex', flexDirection:'column', gap:10 }}>
+          ${session.exercises.map((ex, i) => html`
+            <${ExerciseCard}
+              key=${i}
+              exercise=${ex}
+              exerciseIdx=${i}
+              sets=${session.sessionData[i]?.sets || []}
+              lastSession=${lastSession}
+              startingWeight=${startingWeights[ex.name]}
+              expanded=${expanded === i}
+              onToggle=${() => setExpanded(expanded === i ? -1 : i)}
+              onSetComplete=${onSetComplete}
+            />
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+/* ----- Run View ----- */
+const RunView = ({ session, saved, onSave, onBack }) => {
+  const [phase, setPhase] = useState(saved?.phase ?? 0);
+  const [reps, setReps] = useState(saved?.reps ?? '');
+  const [speed, setSpeed] = useState(saved?.speed ?? '');
+  const [duration, setDuration] = useState(saved?.duration ?? '');
+  const [rpe, setRpe] = useState(saved?.rpe ?? 6);
+  const [notes, setNotes] = useState(saved?.notes ?? '');
+  const phaseData = RUN_PHASES[phase];
+  const prescribed = session.runType === 'intervals' ? phaseData.intervals : phaseData.tempo;
+
+  return html`
+    <div style=${{ paddingBottom:120 }}>
+      <div style=${topBar}>
+        <button onClick=${onBack} style=${btnG()}><${I.chevL} size=${20}/></button>
+        <div style=${{ flex:1, textAlign:'center' }}>
+          <div style=${{ color:'var(--muted)', fontSize:10, letterSpacing:'0.15em', fontWeight:700 }}>${session.day.toUpperCase()}</div>
+          <div class="anton" style=${{ fontSize:18 }}>${session.name.toUpperCase()}</div>
+        </div>
+        <div style=${{ width:36 }}/>
+      </div>
+      <div style=${{ padding:'0 16px 16px' }}>
+        <div style=${{ padding:16, borderRadius:14, background:'var(--card)', border:'1px solid var(--border)', marginBottom:14 }}>
+          <div style=${{ color:'var(--muted)', fontSize:10, fontWeight:700, letterSpacing:'0.1em', marginBottom:6 }}>PRESCRIBED · WEEKS ${phaseData.weeks}</div>
+          <div class="mono" style=${{ fontSize:15, lineHeight:1.4, fontWeight:500 }}>${prescribed}</div>
+          <div style=${{ display:'flex', gap:6, marginTop:10, flexWrap:'wrap' }}>
+            ${RUN_PHASES.map((p, i) => html`
+              <button key=${i} onClick=${() => setPhase(i)} style=${{ height:28, padding:'0 10px', borderRadius:14, border:`1px solid ${i === phase ? 'var(--accent)' : 'var(--border)'}`, background: i === phase ? 'rgba(229,138,90,0.13)' : 'transparent', color: i === phase ? 'var(--accent)' : 'var(--muted)', fontSize:11, fontWeight:600 }}>
+                W${p.weeks.split(' ')[0]}
+              </button>
+            `)}
+          </div>
+        </div>
+
+        <div style=${{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:10 }}>
+          ${session.runType === 'intervals' ? html`
+            <div>
+              <label style=${inputLabel}>REPS COMPLETED</label>
+              <input type="number" inputMode="numeric" value=${reps} onInput=${(e) => setReps(e.target.value)} placeholder="e.g. 5" style=${numInput}/>
+            </div>
+            <div>
+              <label style=${inputLabel}>SPEED (KM/H)</label>
+              <input type="number" inputMode="decimal" value=${speed} onInput=${(e) => setSpeed(e.target.value)} placeholder="e.g. 12.5" style=${numInput}/>
+            </div>
+          ` : html`
+            <div>
+              <label style=${inputLabel}>DURATION (MIN)</label>
+              <input type="number" inputMode="numeric" value=${duration} onInput=${(e) => setDuration(e.target.value)} placeholder="e.g. 20" style=${numInput}/>
+            </div>
+            <div>
+              <label style=${inputLabel}>SPEED (KM/H)</label>
+              <input type="number" inputMode="decimal" value=${speed} onInput=${(e) => setSpeed(e.target.value)} placeholder="e.g. 12" style=${numInput}/>
+            </div>
+          `}
+        </div>
+
+        <div style=${{ padding:14, borderRadius:12, background:'var(--card)', border:'1px solid var(--border)', marginBottom:10 }}>
+          <div style=${{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+            <label style=${{ ...inputLabel, margin:0 }}>RPE (1–10)</label>
+            <span class="anton" style=${{ fontSize:24, color:'var(--accent)' }}>${rpe}</span>
+          </div>
+          <input type="range" min="1" max="10" value=${rpe} onInput=${(e) => setRpe(parseInt(e.target.value, 10))} style=${{ width:'100%', accentColor:'var(--accent)' }}/>
+          <div style=${{ display:'flex', justifyContent:'space-between', color:'var(--dim)', fontSize:10, marginTop:4, fontWeight:600 }}>
+            <span>EASY</span><span>MOD</span><span>HARD</span><span>MAX</span>
+          </div>
+        </div>
+
+        <div style=${{ padding:14, borderRadius:12, background:'var(--card)', border:'1px solid var(--border)', marginBottom:14 }}>
+          <label style=${inputLabel}>NOTES</label>
+          <textarea value=${notes} onInput=${(e) => setNotes(e.target.value)} placeholder="How did it feel?" style=${{ width:'100%', minHeight:60, background:'var(--bg)', color:'var(--text)', border:'1px solid var(--border)', borderRadius:8, padding:10, fontSize:13, outline:'none', resize:'vertical', fontFamily:'inherit' }}/>
+        </div>
+
+        <button onClick=${() => onSave({ phase, reps, speed, duration, rpe, notes })} style=${{ ...btnP(48), width:'100%' }}>
+          <${I.check} size=${16}/> Save Session
+        </button>
+      </div>
+    </div>
+  `;
+};
+
+/* ----- Body View ----- */
+const BodyView = ({ weighIns, onAdd, onBack }) => {
+  const [kg, setKg] = useState('');
+  const [bf, setBf] = useState('');
+  const data = [...weighIns].sort((a,b) => a.date.localeCompare(b.date)).slice(-30);
+  const min = data.length ? Math.min(...data.map(d => d.kg)) : 0;
+  const max = data.length ? Math.max(...data.map(d => d.kg)) : 0;
+  const range = Math.max(1, max - min);
+  const latest = data[data.length - 1];
+  const first = data[0];
+  const change = latest && first ? (latest.kg - first.kg) : 0;
+
+  const add = () => {
+    const k = parseFloat(kg);
+    if (isNaN(k)) return;
+    const b = bf === '' ? null : parseFloat(bf);
+    onAdd({ kg: k, bf: isNaN(b) ? null : b, date: todayKey() });
+    setKg(''); setBf('');
+  };
+
+  return html`
+    <div style=${{ paddingBottom:100 }}>
+      <div style=${topBar}>
+        <button onClick=${onBack} style=${btnG()}><${I.chevL} size=${20}/></button>
+        <div style=${{ flex:1, textAlign:'center' }}>
+          <div class="anton" style=${{ fontSize:18 }}>BODY</div>
+        </div>
+        <div style=${{ width:36 }}/>
+      </div>
+      <div style=${{ padding:'0 16px' }}>
+        <div style=${{ padding:16, borderRadius:14, background:'linear-gradient(135deg, var(--bg2), var(--card))', border:'1px solid var(--border)', marginBottom:14 }}>
+          <div style=${{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+            <div>
+              <div style=${{ color:'var(--muted)', fontSize:10, fontWeight:700, letterSpacing:'0.1em' }}>CURRENT</div>
+              <div class="anton" style=${{ fontSize:44, lineHeight:1 }}>
+                ${latest ? latest.kg.toFixed(1) : '—'}<span style=${{ fontSize:18, color:'var(--muted)', marginLeft:4 }}>kg</span>
+              </div>
+              ${latest?.bf && html`<div class="mono" style=${{ color:'var(--dim)', fontSize:12, marginTop:4 }}>${latest.bf}% BF</div>`}
+            </div>
+            <div style=${{ textAlign:'right' }}>
+              <div style=${{ color:'var(--muted)', fontSize:10, fontWeight:700, letterSpacing:'0.1em' }}>CHANGE</div>
+              <div class="anton" style=${{ fontSize:24, lineHeight:1.2, color: change < 0 ? 'var(--success)' : change > 0 ? 'var(--warn)' : 'var(--text)' }}>
+                ${change >= 0 ? '+' : ''}${change.toFixed(1)}<span style=${{ fontSize:12, color:'var(--muted)', marginLeft:2 }}>kg</span>
+              </div>
+            </div>
+          </div>
+          ${data.length > 1 && html`
+            <div style=${{ marginTop:16, height:60 }}>
+              <svg width="100%" height="60" viewBox=${`0 0 ${data.length * 10} 60`} preserveAspectRatio="none" style=${{ width:'100%', height:60 }}>
+                <polyline points=${data.map((d,i) => `${i*10},${60 - ((d.kg - min) / range) * 50 - 5}`).join(' ')} fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+                ${data.map((d,i) => html`<circle cx=${i*10} cy=${60 - ((d.kg - min) / range) * 50 - 5} r="2" fill="var(--accent)"/>`)}
+              </svg>
+            </div>
+          `}
+        </div>
+
+        <div style=${{ padding:14, borderRadius:12, background:'var(--card)', border:'1px solid var(--border)', marginBottom:14 }}>
+          <div style=${{ color:'var(--muted)', fontSize:11, fontWeight:700, letterSpacing:'0.1em', marginBottom:10 }}>LOG WEIGH-IN · ${todayKey()}</div>
+          <div style=${{ display:'grid', gridTemplateColumns:'1fr 1fr auto', gap:8, alignItems:'end' }}>
+            <div>
+              <label style=${inputLabel}>WEIGHT (kg)</label>
+              <input type="number" inputMode="decimal" value=${kg} onInput=${(e) => setKg(e.target.value)} placeholder="88.0" style=${numInput}/>
+            </div>
+            <div>
+              <label style=${inputLabel}>BF % (opt)</label>
+              <input type="number" inputMode="decimal" value=${bf} onInput=${(e) => setBf(e.target.value)} placeholder="19" style=${numInput}/>
+            </div>
+            <button onClick=${add} style=${{ ...btnP(46), width:46, padding:0 }}><${I.plus} size=${18} sw=${2.5}/></button>
+          </div>
+        </div>
+
+        <div style=${{ fontSize:11, color:'var(--muted)', fontWeight:700, letterSpacing:'0.1em', padding:'0 4px 8px' }}>RECENT · ${data.length} ENTRIES</div>
+        <div style=${{ display:'flex', flexDirection:'column', gap:6 }}>
+          ${[...data].reverse().slice(0, 10).map((d) => html`
+            <div key=${d.date} style=${{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:10, background:'var(--card)', border:'1px solid var(--border)' }}>
+              <span class="mono" style=${{ color:'var(--muted)', fontSize:12 }}>${d.date}</span>
+              <span class="mono" style=${{ fontSize:14, fontWeight:600 }}>${d.kg.toFixed(1)} kg${d.bf ? ` · ${d.bf}%` : ''}</span>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+/* ----- History View ----- */
+const HistoryView = ({ history, onBack, onOpen }) => html`
+  <div style=${{ paddingBottom:100 }}>
+    <div style=${topBar}>
+      <button onClick=${onBack} style=${btnG()}><${I.chevL} size=${20}/></button>
+      <div style=${{ flex:1, textAlign:'center' }}>
+        <div class="anton" style=${{ fontSize:18 }}>HISTORY</div>
+      </div>
+      <div style=${{ width:36 }}/>
+    </div>
+    <div style=${{ padding:'0 16px' }}>
+      ${history.length === 0 ? html`
+        <div style=${{ padding:'40px 20px', textAlign:'center', color:'var(--muted)', fontSize:13 }}>
+          No sessions logged yet. Start your first workout to build history.
+        </div>
+      ` : html`
+        <div style=${{ display:'flex', flexDirection:'column', gap:8 }}>
+          ${history.map((s, i) => html`
+            <div key=${i} onClick=${() => onOpen(s)} style=${{ padding:'14px 16px', borderRadius:12, background:'var(--card)', border:'1px solid var(--border)', cursor:'pointer', display:'flex', alignItems:'center', gap:12 }}>
+              <div style=${{ width:6, height:38, borderRadius:3, background: s.type === 'lift' ? 'var(--accent)' : s.type === 'run' ? 'var(--success)' : 'var(--dim)' }}/>
+              <div style=${{ flex:1 }}>
+                <div style=${{ fontSize:14, fontWeight:600 }}>${s.name}</div>
+                <div class="mono" style=${{ color:'var(--muted)', fontSize:11, marginTop:2 }}>
+                  ${s.date} · ${s.type === 'lift'
+                    ? `${(s.sessionData || []).reduce((sum,e) => sum + (e?.sets || []).filter(x => x?.done).length, 0)} sets`
+                    : s.type === 'run' ? 'run' : 'session'}
+                </div>
+              </div>
+              <${I.chevR} size=${16} color="var(--dim)"/>
+            </div>
+          `)}
+        </div>
+      `}
+    </div>
+  </div>
+`;
+
+/* ----- Starting Weights View ----- */
+const StartingWeightRow = ({ exercise, value, onChange }) => {
+  const [val, setVal] = useState(value ?? '');
+  useEffect(() => { setVal(value ?? ''); }, [value]);
+  const commit = () => {
+    if (val === '' || isNaN(parseFloat(val))) onChange(null);
+    else onChange(parseFloat(val));
+  };
+  return html`
+    <div style=${{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:10, background:'var(--card)', border:`1px solid ${value != null ? 'rgba(229,138,90,0.4)' : 'var(--border)'}` }}>
+      <div style=${{ flex:1, minWidth:0 }}>
+        <div style=${{ fontSize:13, fontWeight:500, lineHeight:1.3 }}>${exercise.name}</div>
+        <div class="mono" style=${{ fontSize:10, color:'var(--muted)', marginTop:2 }}>${exercise.sets} × ${exercise.reps}${exercise.note ? ` · ${exercise.note}` : ''}</div>
+      </div>
+      <div style=${{ display:'flex', alignItems:'center', gap:4 }}>
+        <input type="number" inputMode="decimal" value=${val}
+          onInput=${(e) => setVal(e.target.value)} onBlur=${commit}
+          placeholder="—" style=${{ width:76, height:38, background:'var(--bg)', color:'var(--text)', border:'1px solid var(--border)', borderRadius:8, padding:'0 8px', fontFamily:"'JetBrains Mono', monospace", fontSize:15, fontWeight:600, outline:'none', textAlign:'center' }}/>
+        <span style=${{ color:'var(--muted)', fontSize:11, fontWeight:600, width:18 }}>kg</span>
+      </div>
+    </div>
+  `;
+};
+
+const StartingWeightsView = ({ startingWeights, onUpdate, onBack }) => {
+  const days = ['Mon','Wed','Thu','Fri'];
+  const seen = new Set();
+  const grouped = days.map((day) => {
+    const cfg = PROGRAM[day]; if (cfg.type !== 'lift') return null;
+    const exes = [];
+    for (const ex of cfg.exercises) {
+      if (seen.has(ex.name)) continue;
+      seen.add(ex.name);
+      exes.push(ex);
+    }
+    return { day, name: cfg.name, exercises: exes };
+  }).filter(Boolean);
+  const filled = Object.values(startingWeights).filter((v) => v != null).length;
+  const total = seen.size;
+
+  return html`
+    <div style=${{ paddingBottom:100 }}>
+      <div style=${topBar}>
+        <button onClick=${onBack} style=${btnG()}><${I.chevL} size=${20}/></button>
+        <div style=${{ flex:1, textAlign:'center' }}>
+          <div style=${{ color:'var(--muted)', fontSize:10, letterSpacing:'0.15em', fontWeight:700 }}>SETUP</div>
+          <div class="anton" style=${{ fontSize:18 }}>STARTING WEIGHTS</div>
+        </div>
+        <div class="mono" style=${{ fontSize:12, color:'var(--muted)', width:50, textAlign:'right' }}>${filled}/${total}</div>
+      </div>
+      <div style=${{ padding:'0 16px' }}>
+        <div style=${{ padding:'12px 14px', borderRadius:10, background:'rgba(229,138,90,0.07)', border:'1px solid rgba(229,138,90,0.25)', marginBottom:16, fontSize:12, lineHeight:1.5 }}>
+          Enter current working weight for each exercise. Saves on tap-out. Pre-fills the "last session" reference on new exercises. Blank for bodyweight.
+        </div>
+        ${grouped.map((g) => html`
+          <div key=${g.day} style=${{ marginBottom:18 }}>
+            <div style=${{ color:'var(--accent)', fontSize:11, fontWeight:700, letterSpacing:'0.12em', marginBottom:8, padding:'0 4px', display:'flex', alignItems:'center', gap:6 }}>
+              <span style=${{ display:'inline-block', width:24, height:2, background:'var(--accent)' }}/>
+              ${g.day.toUpperCase()} · ${g.name.toUpperCase()}
+            </div>
+            <div style=${{ display:'flex', flexDirection:'column', gap:6 }}>
+              ${g.exercises.map((ex) => html`<${StartingWeightRow} key=${ex.name} exercise=${ex} value=${startingWeights[ex.name]} onChange=${(v) => onUpdate(ex.name, v)}/>`)}
+            </div>
+          </div>
+        `)}
+      </div>
+    </div>
+  `;
+};
+
+/* ----- Settings View ----- */
+const SettingsView = ({ onBack, onReset, dataSize, onNav }) => html`
+  <div style=${{ paddingBottom:100 }}>
+    <div style=${topBar}>
+      <button onClick=${onBack} style=${btnG()}><${I.chevL} size=${20}/></button>
+      <div style=${{ flex:1, textAlign:'center' }}>
+        <div class="anton" style=${{ fontSize:18 }}>SETTINGS</div>
+      </div>
+      <div style=${{ width:36 }}/>
+    </div>
+    <div style=${{ padding:'0 16px' }}>
+      <button onClick=${() => onNav('starting-weights')} style=${{ width:'100%', padding:'14px 16px', borderRadius:12, background:'var(--card)', border:'1px solid var(--border)', display:'flex', alignItems:'center', gap:12, marginBottom:10, textAlign:'left' }}>
+        <${I.dumbbell} size=${18} color="var(--accent)"/>
+        <div style=${{ flex:1 }}>
+          <div style=${{ fontSize:13, fontWeight:600 }}>Starting Weights</div>
+          <div style=${{ color:'var(--muted)', fontSize:11, marginTop:2 }}>Set current working weight per exercise</div>
+        </div>
+        <${I.chevR} size=${16} color="var(--dim)"/>
+      </button>
+      <div style=${{ padding:16, borderRadius:12, background:'var(--card)', border:'1px solid var(--border)', marginBottom:10 }}>
+        <div style=${{ color:'var(--muted)', fontSize:11, fontWeight:700, letterSpacing:'0.1em', marginBottom:8 }}>ABOUT</div>
+        <div style=${{ fontSize:13, lineHeight:1.5 }}>FORGE · workout tracker built for the 2026 program. Auto-loads today's session. Rest timers auto-start with skip / +30s. Data saved locally on your phone.</div>
+      </div>
+      <div style=${{ padding:16, borderRadius:12, background:'var(--card)', border:'1px solid var(--border)', marginBottom:10 }}>
+        <div style=${{ color:'var(--muted)', fontSize:11, fontWeight:700, letterSpacing:'0.1em', marginBottom:8 }}>DATA</div>
+        <div style=${{ fontSize:13, marginBottom:12 }}>${dataSize} sessions stored</div>
+        <button onClick=${onReset} style=${{ ...btnS(40), width:'100%', color:'var(--danger)', borderColor:'rgba(229,106,106,0.4)' }}>Reset all data</button>
+      </div>
+    </div>
+  </div>
+`;
+
+/* ----- Home View ----- */
+const HomeView = ({ todaysSession, lastWeight, onStart, onPickDay, onNav }) => {
+  const today = new Date();
+  const dn = dayName(today);
+  return html`
+    <div style=${{ paddingBottom:100 }}>
+      <div style=${{ padding:'16px 16px 14px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        <${Logo}/>
+        <button onClick=${() => onNav('settings')} style=${btnG()}><${I.gear} size=${18} color="var(--muted)"/></button>
+      </div>
+      <div style=${{ padding:'0 16px' }}>
+        <div style=${{ color:'var(--muted)', fontSize:11, fontWeight:700, letterSpacing:'0.15em', marginBottom:4 }}>
+          ${DAY_LONG[today.getDay()].toUpperCase()} · ${todayKey()}
+        </div>
+        <div style=${{ padding:20, borderRadius:16, background:'linear-gradient(135deg, var(--card) 0%, var(--bg2) 100%)', border:'1px solid var(--border)', marginBottom:14, position:'relative', overflow:'hidden' }}>
+          <div style=${{ position:'absolute', top:-30, right:-30, width:120, height:120, borderRadius:'50%', background:'radial-gradient(circle, rgba(229,138,90,0.13) 0%, transparent 70%)' }}/>
+          <div style=${{ display:'flex', alignItems:'center', gap:8, marginBottom:10, position:'relative' }}>
+            ${todaysSession.icon === 'wind' ? html`<${I.wind} size=${16} color="var(--accent)"/>` :
+              todaysSession.icon === 'moon' ? html`<${I.moon} size=${16} color="var(--accent)"/>` :
+              html`<${I.flame} size=${16} color="var(--accent)"/>`}
+            <span style=${{ color:'var(--accent)', fontSize:11, fontWeight:700, letterSpacing:'0.12em' }}>TODAY'S SESSION</span>
+          </div>
+          <div class="anton" style=${{ fontSize:36, lineHeight:1, marginBottom:4, position:'relative' }}>${todaysSession.name.toUpperCase()}</div>
+          <div style=${{ color:'var(--muted)', fontSize:13, marginBottom:16, position:'relative' }}>${todaysSession.subtitle}</div>
+          ${todaysSession.type === 'rest' ? html`
+            <div style=${{ color:'var(--muted)', fontSize:12, marginBottom:10 }}>Pick another session below to train today instead.</div>
+          ` : html`
+            <button onClick=${onStart} style=${{ ...btnP(50), width:'100%', fontSize:15 }}>
+              <${I.play} size=${14} color="var(--bg)"/> Start Session
+            </button>
+          `}
+        </div>
+
+        <div style=${{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:14 }}>
+          <button onClick=${() => onNav('body')} style=${statCard()}>
+            <${I.scale} size=${16} color="var(--accent)"/>
+            <div style=${{ color:'var(--muted)', fontSize:10, fontWeight:700, letterSpacing:'0.1em' }}>BODYWEIGHT</div>
+            <div class="anton" style=${{ fontSize:22, lineHeight:1 }}>${lastWeight ? lastWeight.toFixed(1) : '—'}<span style=${{ fontSize:12, color:'var(--muted)', marginLeft:3 }}>kg</span></div>
+          </button>
+          <button onClick=${() => onNav('history')} style=${statCard()}>
+            <${I.history} size=${16} color="var(--accent)"/>
+            <div style=${{ color:'var(--muted)', fontSize:10, fontWeight:700, letterSpacing:'0.1em' }}>HISTORY</div>
+            <div class="anton" style=${{ fontSize:22, lineHeight:1 }}>View</div>
+          </button>
+        </div>
+
+        <div style=${{ color:'var(--muted)', fontSize:11, fontWeight:700, letterSpacing:'0.1em', marginBottom:8, padding:'0 4px' }}>THE WEEK</div>
+        <div style=${{ display:'flex', flexDirection:'column', gap:6 }}>
+          ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) => {
+            const s = PROGRAM[d];
+            const isToday = d === dn;
+            return html`
+              <button key=${d} onClick=${() => onPickDay(d)} style=${{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', background: isToday ? 'rgba(229,138,90,0.08)' : 'var(--card)', border:`1px solid ${isToday ? 'rgba(229,138,90,0.4)' : 'var(--border)'}`, borderRadius:10, textAlign:'left' }}>
+                <div class="anton" style=${{ width:28, height:28, borderRadius:6, background:'var(--bg)', border:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color: isToday ? 'var(--accent)' : 'var(--muted)' }}>${d.toUpperCase()}</div>
+                <div style=${{ flex:1 }}>
+                  <div style=${{ fontSize:13, fontWeight:600 }}>${s.name}</div>
+                  <div style=${{ fontSize:11, color:'var(--muted)' }}>${s.subtitle}</div>
+                </div>
+                ${s.icon === 'wind' ? html`<${I.wind} size=${14} color=${isToday ? 'var(--accent)' : 'var(--dim)'}/>` :
+                  s.icon === 'moon' ? html`<${I.moon} size=${14} color=${isToday ? 'var(--accent)' : 'var(--dim)'}/>` :
+                  html`<${I.flame} size=${14} color=${isToday ? 'var(--accent)' : 'var(--dim)'}/>`}
+              </button>
+            `;
+          })}
+        </div>
+      </div>
+    </div>
+  `;
+};
+const statCard = () => ({
+  padding:14, borderRadius:12, background:'var(--card)', border:'1px solid var(--border)',
+  textAlign:'left', display:'flex', flexDirection:'column', alignItems:'flex-start', gap:6,
+});
+
+/* ===========================================================
+   ROOT APP
+   =========================================================== */
+function App() {
+  const [view, setView] = useState('home');
+  const [currentSession, setCurrentSession] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [weighIns, setWeighIns] = useState([]);
+  const [startingWeights, setStartingWeights] = useState({});
+  const [restActive, setRestActive] = useState(false);
+  const [restRemaining, setRestRemaining] = useState(0);
+  const [restTotal, setRestTotal] = useState(0);
+  const restEndRef = useRef(0);
+  const tickRef = useRef(null);
+  const beepFiredRef = useRef(false);
+
+  // Load on mount
+  useEffect(() => {
+    const sessionKeys = store.listKeys('session:');
+    const sessions = sessionKeys.map((k) => store.get(k)).filter(Boolean);
+    sessions.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    setHistory(sessions);
+    setWeighIns(store.get('weighIns', []));
+    setStartingWeights(store.get('startingWeights', {}));
+  }, []);
+
+  // Rest timer driven by timestamp so it survives tab visibility throttling
+  useEffect(() => {
+    if (!restActive) {
+      clearInterval(tickRef.current);
+      return;
+    }
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((restEndRef.current - Date.now()) / 1000));
+      setRestRemaining(remaining);
+      if (remaining === 0 && !beepFiredRef.current) {
+        beepFiredRef.current = true;
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = 880;
+          gain.gain.setValueAtTime(0.001, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.5);
+        } catch {}
+        if (navigator.vibrate) navigator.vibrate([220, 100, 220]);
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try { new Notification('FORGE', { body: 'Rest complete — next set', tag: 'forge-rest' }); } catch {}
+        }
+        setTimeout(() => setRestActive(false), 800);
+      }
+    };
+    tick();
+    tickRef.current = setInterval(tick, 250);
+    return () => clearInterval(tickRef.current);
+  }, [restActive]);
+
+  // Recalculate timer on visibility change (catches up after backgrounding)
+  useEffect(() => {
+    const handler = () => {
+      if (restActive && !document.hidden) {
+        const remaining = Math.max(0, Math.ceil((restEndRef.current - Date.now()) / 1000));
+        setRestRemaining(remaining);
+      }
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [restActive]);
+
+  const dn = dayName();
+  const todaysSession = { ...PROGRAM[dn], day: dn };
+
+  const ensureSession = (day) => {
+    const cfg = PROGRAM[day];
+    if (cfg.type === 'lift') {
+      return {
+        date: todayKey(), day, name: cfg.name, subtitle: cfg.subtitle, type: 'lift',
+        exercises: cfg.exercises,
+        sessionData: cfg.exercises.map((e) => ({ name: e.name, sets: Array.from({length: e.sets}).map(() => ({})) })),
+      };
+    }
+    if (cfg.type === 'run') {
+      return { date: todayKey(), day, name: cfg.name, subtitle: cfg.subtitle, type: 'run', runType: cfg.runType };
+    }
+    return { date: todayKey(), day, name: cfg.name, subtitle: cfg.subtitle, type: 'rest' };
+  };
+
+  const startSession = (day = dn) => {
+    const cfg = PROGRAM[day];
+    if (cfg.type === 'rest') return;
+    const existing = store.get(`session:${todayKey()}:${day}`);
+    setCurrentSession(existing || ensureSession(day));
+    setView(cfg.type === 'lift' ? 'workout' : 'run');
+    // Request notification permission lazily on first session start
+    if ('Notification' in window && Notification.permission === 'default') {
+      try { Notification.requestPermission(); } catch {}
+    }
+  };
+
+  const saveCurrentSession = useCallback((s) => {
+    if (!s) return;
+    store.set(`session:${s.date}:${s.day}`, s);
+    setHistory((prev) => {
+      const filtered = prev.filter((p) => !(p.date === s.date && p.day === s.day));
+      const next = [s, ...filtered];
+      next.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      return next;
+    });
+  }, []);
+
+  const handleSetComplete = (exIdx, setIdx, data) => {
+    setCurrentSession((prev) => {
+      if (!prev) return prev;
+      const copy = { ...prev, sessionData: prev.sessionData.map((e, i) =>
+        i === exIdx ? { ...e, sets: e.sets.map((s, j) => j === setIdx ? data : s) } : e
+      )};
+      saveCurrentSession(copy);
+      const restSec = prev.exercises[exIdx]?.rest ?? 90;
+      restEndRef.current = Date.now() + restSec * 1000;
+      beepFiredRef.current = false;
+      setRestTotal(restSec);
+      setRestRemaining(restSec);
+      setRestActive(true);
+      return copy;
+    });
+  };
+
+  const lastSessionFor = (day) => {
+    const today = todayKey();
+    return history.find((s) => s.day === day && s.date !== today && s.type === 'lift');
+  };
+
+  const finishWorkout = () => {
+    if (currentSession) saveCurrentSession(currentSession);
+    setView('home');
+    setCurrentSession(null);
+    setRestActive(false);
+  };
+
+  const handleRunSave = (data) => {
+    const s = { ...currentSession, ...data, saved: true };
+    saveCurrentSession(s);
+    setView('home');
+    setCurrentSession(null);
+  };
+
+  const addWeighIn = (entry) => {
+    const next = [...weighIns.filter((w) => w.date !== entry.date), entry];
+    setWeighIns(next);
+    store.set('weighIns', next);
+  };
+
+  const updateStartingWeight = (name, w) => {
+    const next = { ...startingWeights };
+    if (w == null) delete next[name]; else next[name] = w;
+    setStartingWeights(next);
+    store.set('startingWeights', next);
+  };
+
+  const resetAll = () => {
+    if (!confirm('Delete all sessions, weigh-ins and starting weights? Cannot be undone.')) return;
+    for (const k of store.listKeys('')) store.del(k);
+    setHistory([]); setWeighIns([]); setStartingWeights({});
+  };
+
+  const latestWeight = weighIns.length ? [...weighIns].sort((a,b) => b.date.localeCompare(a.date))[0]?.kg : null;
+
+  return html`
+    <div class="root">
+      ${view === 'home' && html`<${HomeView} todaysSession=${todaysSession} lastWeight=${latestWeight} onStart=${() => startSession()} onPickDay=${(d) => startSession(d)} onNav=${setView}/>`}
+      ${view === 'workout' && currentSession && html`<${WorkoutView} session=${currentSession} lastSession=${lastSessionFor(currentSession.day)} startingWeights=${startingWeights} onSetComplete=${handleSetComplete} onFinish=${finishWorkout} onBack=${() => { setView('home'); setRestActive(false); }}/>`}
+      ${view === 'run' && currentSession && html`<${RunView} session=${currentSession} saved=${history.find((s) => s.date === currentSession.date && s.day === currentSession.day)} onSave=${handleRunSave} onBack=${() => setView('home')}/>`}
+      ${view === 'body' && html`<${BodyView} weighIns=${weighIns} onAdd=${addWeighIn} onBack=${() => setView('home')}/>`}
+      ${view === 'history' && html`<${HistoryView} history=${history} onBack=${() => setView('home')} onOpen=${(s) => { if (s.type === 'lift') { setCurrentSession(s); setView('workout'); } else if (s.type === 'run') { setCurrentSession(s); setView('run'); } }}/>`}
+      ${view === 'settings' && html`<${SettingsView} onBack=${() => setView('home')} onReset=${resetAll} dataSize=${history.length} onNav=${setView}/>`}
+      ${view === 'starting-weights' && html`<${StartingWeightsView} startingWeights=${startingWeights} onUpdate=${updateStartingWeight} onBack=${() => setView('home')}/>`}
+      <${RestTimerOverlay} active=${restActive} remaining=${restRemaining} total=${restTotal} onSkip=${() => setRestActive(false)} onExtend=${(s) => { restEndRef.current += s*1000; setRestTotal(t => t + s); setRestRemaining(r => r + s); }} onCancel=${() => setRestActive(false)}/>
+    </div>
+  `;
+}
+
+render(html`<${App}/>`, document.getElementById('app'));
+</script>
+</body>
+</html>
