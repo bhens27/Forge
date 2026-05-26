@@ -16,6 +16,7 @@ export interface Exercise {
   rest: number;
   note?: string;
   bodyweight?: boolean;
+  setTypes?: string[];
 }
 
 export type IconName = 'flame' | 'wind' | 'moon';
@@ -59,6 +60,8 @@ export interface RunSession {
   gym?: Gym;
   runType: 'intervals' | 'tempo';
   phase?: number;
+  warmupSpeed?: string;
+  distPerRep?: string;
   reps?: string;
   speed?: string;
   duration?: string;

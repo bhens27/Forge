@@ -16,7 +16,7 @@ export const PROGRAM: Record<string, DayConfig> = {
     name: 'Chest & Back', subtitle: 'Heavy Bench Day', type: 'lift', icon: 'flame',
     exercises: [
       { name: 'Smith machine flat bench', sets: 4, reps: 5, rest: REST.heavy, note: '+2.5kg/wk when all reps clean' },
-      { name: 'Pull-ups', sets: 4, reps: '1 RIR', rest: REST.pullup, note: 'Per phase progression', bodyweight: true },
+      { name: 'Pull-ups', sets: 6, reps: '1 RIR', rest: REST.pullup, note: 'Per phase progression', bodyweight: true, setTypes: ['rir','rir','rir','rir','assist','assist'] },
       { name: 'Incline DB press', sets: 3, reps: 8, rest: REST.compound },
       { name: 'Machine pec fly', sets: 3, reps: 12, rest: REST.isolation },
       { name: 'Barbell bent-over row', sets: 3, reps: 6, rest: REST.compound, note: 'Heavy' },
@@ -53,7 +53,7 @@ export const PROGRAM: Record<string, DayConfig> = {
   Fri: {
     name: 'Full Upper', subtitle: 'Volume Bench', type: 'lift', icon: 'flame',
     exercises: [
-      { name: 'Pull-ups', sets: 5, reps: '1-2 RIR', rest: REST.pullup, note: 'Per phase', bodyweight: true },
+      { name: 'Pull-ups', sets: 6, reps: '1-2 RIR', rest: REST.pullup, note: 'Per phase', bodyweight: true, setTypes: ['rir','rir','rir','rir','assist','assist'] },
       { name: 'Smith machine flat bench', sets: 3, reps: 8, rest: REST.compound, note: '80% of Mon' },
       { name: 'Close-grip Smith bench', sets: 3, reps: 8, rest: REST.compound },
       { name: 'Chest-supported DB row', sets: 3, reps: 10, rest: REST.accessory },

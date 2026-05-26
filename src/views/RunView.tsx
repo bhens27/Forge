@@ -13,6 +13,8 @@ interface Props {
 
 export function RunView({ session, saved, onSave, onBack }: Props) {
   const [phase, setPhase] = useState(saved?.phase ?? 0);
+  const [warmupSpeed, setWarmupSpeed] = useState(saved?.warmupSpeed ?? '');
+  const [distPerRep, setDistPerRep] = useState(saved?.distPerRep ?? '');
   const [reps, setReps] = useState(saved?.reps ?? '');
   const [speed, setSpeed] = useState(saved?.speed ?? '');
   const [duration, setDuration] = useState(saved?.duration ?? '');
@@ -44,31 +46,43 @@ export function RunView({ session, saved, onSave, onBack }: Props) {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-          {session.runType === 'intervals' ? (
-            <>
-              <div>
-                <label style={inputLabel}>REPS COMPLETED</label>
-                <input type="number" inputMode="numeric" value={reps} onChange={(e) => setReps(e.target.value)} placeholder="e.g. 5" style={numInput} />
-              </div>
-              <div>
-                <label style={inputLabel}>SPEED (KM/H)</label>
-                <input type="number" inputMode="decimal" value={speed} onChange={(e) => setSpeed(e.target.value)} placeholder="e.g. 12.5" style={numInput} />
-              </div>
-            </>
-          ) : (
-            <>
+        {session.runType === 'intervals' ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+            <div>
+              <label style={inputLabel}>WARM-UP (KM/H)</label>
+              <input type="number" inputMode="decimal" value={warmupSpeed} onChange={(e) => setWarmupSpeed(e.target.value)} placeholder="e.g. 9.0" style={numInput} />
+            </div>
+            <div>
+              <label style={inputLabel}>DIST/REP (M)</label>
+              <input type="number" inputMode="numeric" value={distPerRep} onChange={(e) => setDistPerRep(e.target.value)} placeholder="e.g. 400" style={numInput} />
+            </div>
+            <div>
+              <label style={inputLabel}>REPS COMPLETED</label>
+              <input type="number" inputMode="numeric" value={reps} onChange={(e) => setReps(e.target.value)} placeholder="e.g. 5" style={numInput} />
+            </div>
+            <div>
+              <label style={inputLabel}>WORKING SPEED (KM/H)</label>
+              <input type="number" inputMode="decimal" value={speed} onChange={(e) => setSpeed(e.target.value)} placeholder="e.g. 14.0" style={numInput} />
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ marginBottom: 10 }}>
+              <label style={inputLabel}>WARM-UP (KM/H)</label>
+              <input type="number" inputMode="decimal" value={warmupSpeed} onChange={(e) => setWarmupSpeed(e.target.value)} placeholder="e.g. 9.0" style={numInput} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div>
                 <label style={inputLabel}>DURATION (MIN)</label>
                 <input type="number" inputMode="numeric" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="e.g. 20" style={numInput} />
               </div>
               <div>
-                <label style={inputLabel}>SPEED (KM/H)</label>
-                <input type="number" inputMode="decimal" value={speed} onChange={(e) => setSpeed(e.target.value)} placeholder="e.g. 12" style={numInput} />
+                <label style={inputLabel}>WORKING SPEED (KM/H)</label>
+                <input type="number" inputMode="decimal" value={speed} onChange={(e) => setSpeed(e.target.value)} placeholder="e.g. 12.0" style={numInput} />
               </div>
-            </>
-          )}
-        </div>
+            </div>
+          </div>
+        )}
 
         <div style={{ padding: 14, borderRadius: 12, background: 'var(--card)', border: '1px solid var(--border)', marginBottom: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
@@ -91,7 +105,7 @@ export function RunView({ session, saved, onSave, onBack }: Props) {
           />
         </div>
 
-        <button onClick={() => onSave({ phase, reps, speed, duration, rpe, notes })} style={{ ...btnP(48), width: '100%' }}>
+        <button onClick={() => onSave({ phase, warmupSpeed, distPerRep, reps, speed, duration, rpe, notes })} style={{ ...btnP(48), width: '100%' }}>
           <I.Check size={16} /> Save Session
         </button>
       </div>

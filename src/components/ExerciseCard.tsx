@@ -56,6 +56,7 @@ export function ExerciseCard({ exercise, exerciseIdx, sets, lastSession, startin
               set={sets[i] || {}}
               last={lastSets[i]?.done ? lastSets[i] : syntheticLast}
               exercise={exercise}
+              setType={exercise.setTypes?.[i]}
               readOnly={readOnly}
               onComplete={(idx, d) => onSetComplete(exerciseIdx, idx, d)}
             />

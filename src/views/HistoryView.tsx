@@ -8,9 +8,10 @@ interface Props {
   history: Session[];
   onBack: () => void;
   onOpen: (s: Session) => void;
+  onDelete: (s: Session) => void;
 }
 
-export function HistoryView({ history, onBack, onOpen }: Props) {
+export function HistoryView({ history, onBack, onOpen, onDelete }: Props) {
   const [graphExercise, setGraphExercise] = useState<string | null>(null);
 
   const liftSessions = history.filter((s): s is LiftSession => s.type === 'lift');
@@ -43,20 +44,28 @@ export function HistoryView({ history, onBack, onOpen }: Props) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 28 }}>
             {history.map((s, i) => (
-              <div key={i} onClick={() => onOpen(s)} style={{ padding: '14px 16px', borderRadius: 12, background: 'var(--card)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 6, height: 38, borderRadius: 3, background: s.type === 'lift' ? ((s as LiftSession).completed ? 'var(--success)' : 'var(--accent)') : s.type === 'run' ? 'var(--success)' : 'var(--dim)', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
-                  <div className="mono" style={{ color: 'var(--muted)', fontSize: 11, marginTop: 2 }}>
-                    {s.date}
-                    {s.type === 'lift' && (s as LiftSession).gym ? ` · ${(s as LiftSession).gym}` : ''}
-                    {' · '}
-                    {s.type === 'lift'
-                      ? `${(s.sessionData || []).reduce((sum, e) => sum + (e?.sets || []).filter((x) => x?.done).length, 0)} sets${(s as LiftSession).completed ? ' · done' : ''}`
-                      : s.type === 'run' ? 'run' : 'session'}
+              <div key={i} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 0 }}>
+                <div onClick={() => onOpen(s)} style={{ flex: 1, minWidth: 0, padding: '14px 16px', borderRadius: 12, background: 'var(--card)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 6, height: 38, borderRadius: 3, background: s.type === 'lift' ? ((s as LiftSession).completed ? 'var(--success)' : 'var(--accent)') : s.type === 'run' ? 'var(--success)' : 'var(--dim)', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{s.name}</div>
+                    <div className="mono" style={{ color: 'var(--muted)', fontSize: 11, marginTop: 2 }}>
+                      {s.date}
+                      {s.type === 'lift' && (s as LiftSession).gym ? ` · ${(s as LiftSession).gym}` : ''}
+                      {' · '}
+                      {s.type === 'lift'
+                        ? `${(s.sessionData || []).reduce((sum, e) => sum + (e?.sets || []).filter((x) => x?.done).length, 0)} sets${(s as LiftSession).completed ? ' · done' : ''}`
+                        : s.type === 'run' ? 'run' : 'session'}
+                    </div>
                   </div>
+                  <I.ChevR size={16} color="var(--dim)" />
                 </div>
-                <I.ChevR size={16} color="var(--dim)" />
+                <button
+                  onClick={(e) => { e.stopPropagation(); if (confirm('Delete this session? Cannot be undone.')) onDelete(s); }}
+                  style={{ flexShrink: 0, marginLeft: 8, width: 34, height: 34, borderRadius: 8, background: 'none', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                >
+                  <I.Trash size={15} color="var(--muted)" />
+                </button>
               </div>
             ))}
           </div>

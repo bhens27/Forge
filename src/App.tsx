@@ -232,6 +232,12 @@ export function App() {
     store.set('startingWeights', next);
   };
 
+  const deleteSession = (s: Session) => {
+    store.del(`session:${s.date}:${s.day}`);
+    store.listKeys(`session:${s.date}:${s.day}:`).forEach((k) => store.del(k));
+    setHistory((prev) => prev.filter((p) => !(p.date === s.date && p.day === s.day)));
+  };
+
   const resetAll = () => {
     if (!confirm('Delete all sessions, weigh-ins and starting weights? Cannot be undone.')) return;
     for (const k of store.listKeys('')) store.del(k);
@@ -283,6 +289,7 @@ export function App() {
         <HistoryView
           history={history}
           onBack={() => setView('home')}
+          onDelete={deleteSession}
           onOpen={(s) => {
             if (s.type === 'lift') { setCurrentSession(s); setView('workout'); }
             else if (s.type === 'run') { setCurrentSession(s); setView('run'); }
