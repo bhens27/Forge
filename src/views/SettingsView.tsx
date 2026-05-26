@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { ViewName } from '../types';
+import * as XLSX from 'xlsx';
+import type { ViewName, LiftSession, RunSession, WeighIn } from '../types';
 import { I } from '../components/icons';
 import { btnG, btnS, topBar } from '../styles/shared';
 import { store } from '../lib/store';
@@ -15,35 +16,93 @@ interface Props {
 export function SettingsView({ onBack, onReset, dataSize, onNav }: Props) {
   const [backupState, setBackupState] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
 
-  const handleBackup = async () => {
+  const handleBackup = () => {
     setBackupState('working');
     try {
-      const sessions = store.listKeys('session:').map((k) => store.get(k)).filter(Boolean);
-      const weighIns = store.get('weighIns', []);
-      const startingWeights = store.get('startingWeights', {});
-      const payload = {
-        exportedAt: new Date().toISOString(),
-        version: 1,
-        sessions,
-        weighIns,
-        startingWeights,
-      };
-      const json = JSON.stringify(payload, null, 2);
-      const filename = `forge-backup-${todayKey()}.json`;
-      const file = new File([json], filename, { type: 'application/json' });
+      const sessions = store
+        .listKeys('session:')
+        .map((k) => store.get(k))
+        .filter(Boolean) as (LiftSession | RunSession)[];
 
-      if (
-        typeof navigator.canShare === 'function' &&
-        navigator.canShare({ files: [file] })
-      ) {
-        await navigator.share({ files: [file], title: 'FORGE Backup' });
-        setBackupState('done');
-        setTimeout(() => setBackupState('idle'), 2000);
-        return;
+      sessions.sort((a, b) => a.date.localeCompare(b.date));
+
+      // ── Sheet 1: Sessions ──────────────────────────────────────────────
+      const sessionHeader = [
+        'Date', 'Day', 'Workout Name', 'Gym',
+        'Exercise / Run Type', 'Set #', 'Weight (kg)', 'Reps',
+        'Warmup Speed (km/h)', 'Dist/Rep (m)', 'Working Speed (km/h)',
+        'Duration (min)', 'RPE', 'Notes',
+      ];
+      const sessionRows: (string | number)[][] = [sessionHeader];
+
+      for (const s of sessions) {
+        if (s.type === 'lift') {
+          for (const ex of s.sessionData) {
+            s.sessionData
+              .find((e) => e.name === ex.name)
+              ?.sets.forEach((set, j) => {
+                if (!set.done) return;
+                sessionRows.push([
+                  s.date, s.day, s.name, s.gym ?? '',
+                  ex.name, j + 1,
+                  set.weight ?? '', set.reps ?? '',
+                  '', '', '', '', '', '',
+                ]);
+              });
+          }
+        } else if (s.type === 'run') {
+          const rs = s as RunSession;
+          sessionRows.push([
+            rs.date, rs.day, rs.name, rs.gym ?? '',
+            rs.runType, '', '', rs.reps ?? '',
+            rs.warmupSpeed ?? '', rs.distPerRep ?? '',
+            rs.speed ?? '', rs.duration ?? '',
+            rs.rpe ?? '', rs.notes ?? '',
+          ]);
+        }
       }
 
-      // Download fallback
-      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      const wsSessions = XLSX.utils.aoa_to_sheet(sessionRows);
+      wsSessions['!cols'] = [
+        { wch: 12 }, { wch: 6 }, { wch: 20 }, { wch: 10 },
+        { wch: 28 }, { wch: 6 }, { wch: 12 }, { wch: 6 },
+        { wch: 18 }, { wch: 12 }, { wch: 20 }, { wch: 14 }, { wch: 5 }, { wch: 30 },
+      ];
+
+      // ── Sheet 2: Weigh-ins ─────────────────────────────────────────────
+      const weighIns = (store.get<WeighIn[]>('weighIns', []) ?? [])
+        .slice()
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      const weighInRows: (string | number)[][] = [['Date', 'Weight (kg)', 'Body Fat %']];
+      for (const w of weighIns) {
+        weighInRows.push([w.date, w.kg, w.bf ?? '']);
+      }
+      const wsWeighIns = XLSX.utils.aoa_to_sheet(weighInRows);
+      wsWeighIns['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 12 }];
+
+      // ── Sheet 3: Starting Weights ──────────────────────────────────────
+      const startingWeights = store.get<Record<string, number>>('startingWeights', {}) ?? {};
+      const swRows: (string | number)[][] = [['Exercise', 'Weight (kg)']];
+      for (const [ex, w] of Object.entries(startingWeights)) {
+        swRows.push([ex, w]);
+      }
+      const wsStartingWeights = XLSX.utils.aoa_to_sheet(swRows);
+      wsStartingWeights['!cols'] = [{ wch: 28 }, { wch: 12 }];
+
+      // ── Build workbook & download ──────────────────────────────────────
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, wsSessions, 'Sessions');
+      XLSX.utils.book_append_sheet(wb, wsWeighIns, 'Weigh-ins');
+      XLSX.utils.book_append_sheet(wb, wsStartingWeights, 'Starting Weights');
+
+      const filename = `forge-backup-${todayKey()}.xlsx`;
+      const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;
+      const blob = new Blob([buf], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
@@ -51,23 +110,20 @@ export function SettingsView({ onBack, onReset, dataSize, onNav }: Props) {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
       setBackupState('done');
       setTimeout(() => setBackupState('idle'), 2000);
-    } catch (err) {
-      if ((err as Error).name === 'AbortError') {
-        setBackupState('idle');
-      } else {
-        setBackupState('error');
-        setTimeout(() => setBackupState('idle'), 3000);
-      }
+    } catch {
+      setBackupState('error');
+      setTimeout(() => setBackupState('idle'), 3000);
     }
   };
 
   const backupLabel =
     backupState === 'working' ? 'Preparing…' :
-    backupState === 'done'    ? 'Done' :
+    backupState === 'done'    ? 'Downloaded' :
     backupState === 'error'   ? 'Failed — try again' :
-    'Backup data';
+    'Backup data (.xlsx)';
 
   return (
     <div style={{ paddingBottom: 100 }}>
@@ -97,7 +153,12 @@ export function SettingsView({ onBack, onReset, dataSize, onNav }: Props) {
           <button
             onClick={handleBackup}
             disabled={backupState === 'working'}
-            style={{ ...btnS(40), width: '100%', marginBottom: 8, color: backupState === 'error' ? 'var(--danger)' : backupState === 'done' ? 'var(--success)' : 'var(--text)', borderColor: backupState === 'error' ? 'rgba(229,106,106,0.4)' : backupState === 'done' ? 'rgba(125,212,154,0.4)' : 'var(--border)', opacity: backupState === 'working' ? 0.6 : 1 }}
+            style={{
+              ...btnS(40), width: '100%', marginBottom: 8,
+              color: backupState === 'error' ? 'var(--danger)' : backupState === 'done' ? 'var(--success)' : 'var(--text)',
+              borderColor: backupState === 'error' ? 'rgba(229,106,106,0.4)' : backupState === 'done' ? 'rgba(125,212,154,0.4)' : 'var(--border)',
+              opacity: backupState === 'working' ? 0.6 : 1,
+            }}
           >
             <I.Share size={15} />
             {backupLabel}
