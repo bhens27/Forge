@@ -21,16 +21,24 @@ const weightDisplay = (w: number | null | undefined): string => {
 };
 
 export function SetRow({ setIdx, set, last, exercise, setType, readOnly, onComplete }: Props) {
-  const isAssist = setType === 'assist';
+  const isFixedAssist = setType === 'assist';
 
-  const initWeight = () => {
-    const w = set.weight ?? last?.weight;
-    if (w == null) return '';
-    return String(isAssist ? Math.abs(w) : w);
+  // For assistable exercises the mode is user-togglable; pre-select from stored weight sign.
+  const deriveAssist = (storedWeight: number | null | undefined) => {
+    if (isFixedAssist) return true;
+    if (exercise.assistable) return storedWeight != null && storedWeight < 0;
+    return false;
   };
 
+  const initIsAssist = deriveAssist(set.weight ?? last?.weight);
+
   const [editing, setEditing] = useState(!set.done);
-  const [weight, setWeight] = useState<string>(initWeight);
+  const [isAssist, setIsAssist] = useState(initIsAssist);
+  const [weight, setWeight] = useState<string>(() => {
+    const w = set.weight ?? last?.weight;
+    if (w == null) return '';
+    return String(initIsAssist ? Math.abs(w) : w);
+  });
   const [reps, setReps] = useState<string>(() => {
     const r = set.reps ?? last?.reps;
     return r != null ? String(r) : '';
@@ -38,8 +46,10 @@ export function SetRow({ setIdx, set, last, exercise, setType, readOnly, onCompl
 
   useEffect(() => {
     if (!set.done) {
+      const newAssist = deriveAssist(set.weight ?? last?.weight);
+      setIsAssist(newAssist);
       const w = set.weight ?? last?.weight;
-      setWeight(w != null ? String(isAssist ? Math.abs(w) : w) : '');
+      setWeight(w != null ? String(newAssist ? Math.abs(w) : w) : '');
       const r = set.reps ?? last?.reps;
       setReps(r != null ? String(r) : '');
     }
@@ -103,16 +113,47 @@ export function SetRow({ setIdx, set, last, exercise, setType, readOnly, onCompl
 
   return (
     <div style={{ padding: 12, borderRadius: 10, background: 'var(--cardHi)', border: '1px solid var(--borderHi)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <span style={{ color: isAssist ? 'var(--accent)' : 'var(--accent)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <span style={{ color: 'var(--accent)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>
           SET {setIdx + 1}{isAssist ? ' · ASSISTED' : ''}
         </span>
         {last && (
           <span className="mono" style={{ fontSize: 11, color: 'var(--dim)' }}>
-            last: {last.weight != null ? `${weightDisplay(last.weight)}` : ''}{last.reps ?? '—'}
+            last: {last.weight != null ? weightDisplay(last.weight) : ''}{last.reps ?? '—'}
           </span>
         )}
       </div>
+
+      {/* LOADED / ASSIST toggle — only for assistable exercises with no fixed setType */}
+      {exercise.assistable && !isFixedAssist && (
+        <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
+          {([false, true] as const).map((assist) => (
+            <button
+              key={String(assist)}
+              onClick={() => setIsAssist(assist)}
+              style={{
+                flex: 1, height: 28, borderRadius: 6,
+                fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+                cursor: 'pointer',
+                background: isAssist === assist
+                  ? (assist ? 'rgba(212,150,10,0.15)' : 'rgba(88,130,183,0.12)')
+                  : 'transparent',
+                border: `1px solid ${isAssist === assist
+                  ? (assist ? 'rgba(212,150,10,0.5)' : 'rgba(88,130,183,0.4)')
+                  : 'var(--border)'}`,
+                color: isAssist === assist
+                  ? (assist ? '#D4960A' : '#7082B3')
+                  : 'var(--dim)',
+              }}
+            >
+              {assist ? 'ASSIST' : 'LOADED'}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Weight / reps inputs */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, alignItems: 'center' }}>
         <div>
           <label style={inputLabel}>{isAssist ? 'ASSIST (kg)' : 'WEIGHT (kg)'}</label>

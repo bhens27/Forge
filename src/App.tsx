@@ -167,6 +167,20 @@ export function App() {
     });
   };
 
+  const handleIntentChange = useCallback((exIdx: number, intent: 'up' | 'stay' | 'down') => {
+    setCurrentSession((prev) => {
+      if (!prev || prev.type !== 'lift') return prev;
+      const copy: LiftSession = {
+        ...prev,
+        sessionData: prev.sessionData.map((e, i) =>
+          i === exIdx ? { ...e, intent } : e
+        ),
+      };
+      saveCurrentSession(copy);
+      return copy;
+    });
+  }, [saveCurrentSession]);
+
   const lastSessionFor = (day: string): LiftSession | undefined =>
     history.find((s) => s.day === day && s.date !== todayKey() && s.type === 'lift') as LiftSession | undefined;
 
@@ -268,6 +282,7 @@ export function App() {
           startingWeights={startingWeights}
           history={history}
           onSetComplete={handleSetComplete}
+          onIntentChange={handleIntentChange}
           onEndSession={handleEndSession}
           onReopenSession={handleReopenSession}
           onFinish={finishWorkout}

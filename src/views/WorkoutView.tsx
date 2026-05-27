@@ -11,13 +11,14 @@ interface Props {
   startingWeights: Record<string, number>;
   history: Session[];
   onSetComplete: (exIdx: number, setIdx: number, data: SetData) => void;
+  onIntentChange: (exIdx: number, intent: 'up' | 'stay' | 'down') => void;
   onEndSession: () => void;
   onReopenSession: () => void;
   onFinish: () => void;
   onBack: () => void;
 }
 
-export function WorkoutView({ session, lastSession, startingWeights, history, onSetComplete, onEndSession, onReopenSession, onFinish, onBack }: Props) {
+export function WorkoutView({ session, lastSession, startingWeights, history, onSetComplete, onIntentChange, onEndSession, onReopenSession, onFinish, onBack }: Props) {
   const [expanded, setExpanded] = useState(0);
   const [historyExercise, setHistoryExercise] = useState<string | null>(null);
 
@@ -63,10 +64,12 @@ export function WorkoutView({ session, lastSession, startingWeights, history, on
               sets={session.sessionData[i]?.sets || []}
               lastSession={lastSession}
               startingWeight={startingWeights[ex.name]}
+              intent={session.sessionData[i]?.intent}
               readOnly={isCompleted}
               expanded={expanded === i}
               onToggle={() => setExpanded(expanded === i ? -1 : i)}
               onSetComplete={onSetComplete}
+              onIntentChange={(intent) => onIntentChange(i, intent)}
               onShowHistory={() => setHistoryExercise(ex.name)}
             />
           ))}

@@ -2,6 +2,14 @@ import type { Session, LiftSession } from '../types';
 import { I } from './icons';
 import { btnG } from '../styles/shared';
 
+type Intent = 'up' | 'stay' | 'down';
+
+const INTENT_BADGE: Record<Intent, { label: string; color: string; bg: string }> = {
+  up:   { label: '↑ UP',   color: 'var(--success)', bg: 'rgba(125,212,154,0.12)' },
+  stay: { label: '— STAY', color: 'var(--muted)',   bg: 'rgba(140,148,164,0.10)' },
+  down: { label: '↓ DOWN', color: '#D4960A',        bg: 'rgba(212,150,10,0.10)'  },
+};
+
 interface Props {
   exerciseName: string;
   history: Session[];
@@ -12,11 +20,15 @@ export function ExerciseHistorySheet({ exerciseName, history, onClose }: Props) 
   const entries = (history.filter((s): s is LiftSession => s.type === 'lift'))
     .filter((s) => s.sessionData?.some((e) => e.name === exerciseName))
     .slice(0, 5)
-    .map((s) => ({
-      date: s.date,
-      gym: s.gym,
-      sets: s.sessionData.find((e) => e.name === exerciseName)?.sets.filter((st) => st.done) ?? [],
-    }));
+    .map((s) => {
+      const ex = s.sessionData.find((e) => e.name === exerciseName);
+      return {
+        date: s.date,
+        gym: s.gym,
+        intent: ex?.intent as Intent | undefined,
+        sets: ex?.sets.filter((st) => st.done) ?? [],
+      };
+    });
 
   return (
     <div
@@ -42,8 +54,16 @@ export function ExerciseHistorySheet({ exerciseName, history, onClose }: Props) 
             </div>
           ) : entries.map((entry, i) => (
             <div key={i} style={{ padding: '12px 14px', borderRadius: 12, background: 'var(--card)', border: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: entry.sets.length > 0 ? 10 : 0 }}>
-                <span className="mono" style={{ fontSize: 12, color: 'var(--muted)' }}>{entry.date}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: entry.sets.length > 0 ? 10 : 0 }}>
+                <span className="mono" style={{ fontSize: 12, color: 'var(--muted)', flex: 1 }}>{entry.date}</span>
+                {entry.intent && (() => {
+                  const cfg = INTENT_BADGE[entry.intent];
+                  return (
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 8, color: cfg.color, background: cfg.bg, letterSpacing: '0.06em' }}>
+                      {cfg.label}
+                    </span>
+                  );
+                })()}
                 {entry.gym && (
                   <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.06em', background: 'rgba(229,138,90,0.1)', padding: '2px 8px', borderRadius: 10 }}>
                     {entry.gym}

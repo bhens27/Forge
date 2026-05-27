@@ -7,6 +7,7 @@ export interface SetData {
 export interface ExerciseSessionData {
   name: string;
   sets: SetData[];
+  intent?: 'up' | 'stay' | 'down';
 }
 
 export interface Exercise {
@@ -17,6 +18,7 @@ export interface Exercise {
   note?: string;
   bodyweight?: boolean;
   setTypes?: string[];
+  assistable?: boolean;
 }
 
 export type IconName = 'flame' | 'wind' | 'moon';

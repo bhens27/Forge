@@ -32,7 +32,7 @@ export const PROGRAM: Record<string, DayConfig> = {
       { name: 'Lateral raises', sets: 3, reps: 12, rest: REST.isolation },
       { name: 'Rear delt fly machine', sets: 3, reps: 12, rest: REST.isolation },
       { name: 'Chin-ups', sets: 3, reps: 8, rest: REST.pullup, note: 'Per phase', bodyweight: true },
-      { name: 'Machine dip (loaded)', sets: 3, reps: 8, rest: REST.compound },
+      { name: 'Machine dip (loaded)', sets: 3, reps: 8, rest: REST.compound, assistable: true },
       { name: 'Incline DB curl', sets: 3, reps: 10, rest: REST.accessory },
       { name: 'Rope tricep extension', sets: 3, reps: 12, rest: REST.isolation },
     ],
